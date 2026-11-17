@@ -66,8 +66,8 @@ type and duration of every 9P request.
 
 ```bat
 cd vio9p
+set EWDK_WIN7_DIR=D:         &rem location of the EWDK 2004 (default c:\ewdk10_2004)
 buildWin7.bat amd64          &rem or x86; see ..\viofs\WIN7.md for the toolchain
-set EWDK_WIN7_DIR=D:         &rem location of the EWDK 2004
 ..\build\signAll.bat         &rem optional: test-sign with build\VirtIOTestCert.pfx
 ```
 
