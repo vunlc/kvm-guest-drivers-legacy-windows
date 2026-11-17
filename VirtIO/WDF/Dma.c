@@ -336,8 +336,21 @@ static BOOLEAN VirtIOWdfDeviceDmaAsync(VirtIODevice *vdev, PVIRTIO_DMA_TRANSACTI
         status = WdfDmaTransactionInitializeUsingRequest(tr, params->req,
                                                          OnDmaTransactionProgramDma, Direction);
     } else if (params->req == (WDFREQUEST)WDF_INVALID_HANDLE) {
+#if !VIRTIO_WDF_KMDF_PRE_1_11
         status = WdfDmaTransactionInitializeUsingOffset(tr, OnDmaTransactionProgramDma, Direction,
                                                         (PMDL)params->buffer, 0, params->size);
+#else
+        /* KMDF < 1.11 (Windows 7) has no WdfDmaTransactionInitializeUsingOffset.
+         * Only a single, unchained MDL is accepted here; callers must fall back
+         * to a bounce buffer for anything that needs an MDL chain. */
+        PMDL mdl = (PMDL)params->buffer;
+        if (mdl != NULL && mdl->Next == NULL) {
+            status = WdfDmaTransactionInitialize(tr, OnDmaTransactionProgramDma, Direction, mdl,
+                                                 MmGetMdlVirtualAddress(mdl), params->size);
+        } else {
+            status = STATUS_NOT_SUPPORTED;
+        }
+#endif
     } else {
         ctx->buffer = ExAllocatePoolUninitialized(NonPagedPool, ctx->parameters.size,
                                                   ctx->parameters.allocationTag);
@@ -417,6 +430,13 @@ NTSTATUS VirtIOWdfDeviceCheckIOMMUActive(PVIRTIO_WDF_DRIVER pWdfDriver, WDFDEVIC
     DPrintf(0, "%s: VIRTIO_F_ACCESS_PLATFORM is %s\n", __FUNCTION__,
             bHasFeature ? "set" : "not set");
 
+#if VIRTIO_WDF_KMDF_PRE_1_13
+    // KMDF < 1.13 (Windows 7) has no WdfDeviceQueryPropertyEx, and DMA remapping
+    // for device drivers does not exist before Windows 10, so the IOMMU is never active.
+    UNREFERENCED_PARAMETER(wdfDev);
+    pWdfDriver->IsIoMmuActive = FALSE;
+    return STATUS_SUCCESS;
+#else
     // https://learn.microsoft.com/en-us/windows-hardware/drivers/pci/enabling-dma-remapping-for-device-drivers
 
     const DEVPROPKEY propKey = {
@@ -454,4 +474,5 @@ NTSTATUS VirtIOWdfDeviceCheckIOMMUActive(PVIRTIO_WDF_DRIVER pWdfDriver, WDFDEVIC
     status = plain.QuadPart == pa.QuadPart ? STATUS_SUCCESS : STATUS_DEVICE_CONFIGURATION_ERROR;
     WdfObjectDelete(commonBuffer);
     return status;
+#endif
 }

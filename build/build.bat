@@ -11,7 +11,7 @@ rem   Debug, dbg, chk       .. to build Debug rather than the default release fl
 rem   amd64, x64, 64        .. to build only 64-bit driver
 rem   x86, 32               .. to build only 32-bit driver
 rem   /Option               .. build command to pass to VS, for example /Rebuild
-rem   Win10, Win11          .. target OS version
+rem   Win7, Win10, Win11    .. target OS version (Win7: viofs and vio9p only, see viofs\WIN7.md)
 rem
 rem By default the script performs an incremental build of both 32-bit and 64-bit
 rem release drivers for all supported target OSes.
@@ -27,7 +27,7 @@ rem This is a list of supported build target specifications A_B where A is the
 rem VS project configuration name and B is the corresponding platform identifier
 rem used in log file names and intermediate directory names. Either of the two can
 rem be used in the <target_os_version> command line argument.
-set SUPPORTED_BUILD_SPECS=Win10_win10 Win11_win11
+set SUPPORTED_BUILD_SPECS=Win7_win7 Win10_win10 Win11_win11
 
 set BUILD_TARGETS=%~2
 set BUILD_DIR=%~dp1

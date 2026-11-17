@@ -45,7 +45,7 @@ Related features:
   <!-- checking $(TargetOS) and $(TargetArch) -->
   <Target Condition="'$(Feature_PackOne)'=='true'" Name="CheckPackOne" BeforeTargets="PackOneTarget">
     <ItemGroup>
-      <PackOne_ValidOS Include="Win10;Win11"/>
+      <PackOne_ValidOS Include="Win7;Win10;Win11"/>
       <PackOne_ValidArch Include="x86;amd64;ARM64"/>
     </ItemGroup>
     <Message Text="Checking PackOne: TargetOS=$(TargetOS) and TargetArch=$(TargetArch)" Importance="high"/>
@@ -66,6 +66,14 @@ Related features:
   <!-- default driver name -->
   <PropertyGroup Condition="'$(PackOne_FileName)'==''">
     <PackOne_FileName>$(TargetName)</PackOne_FileName>
+  </PropertyGroup>
+
+  <!-- from packone.bat create_win7 variant -->
+  <PropertyGroup Condition="'$(TargetOS)'=='Win7' AND '$(TargetArch)'=='x86'">
+    <PackOne_OsMask>7_X86</PackOne_OsMask>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetOS)'=='Win7' AND '$(TargetArch)'=='amd64'">
+    <PackOne_OsMask>7_X64,Server2008R2_X64</PackOne_OsMask>
   </PropertyGroup>
 
   <!-- from packone.bat create_win10 variant -->
@@ -120,6 +128,8 @@ Related features:
   <!-- $(PackOne_CopyWdf) and $(PackOne_WdfCoinstaller) -->
   <PropertyGroup Condition="'$(Feature_UsingWDF)'!='false'">
     <PackOne_CopyWdf>true</PackOne_CopyWdf>
+    <!-- Win7 drivers target the in-box KMDF 1.9, so no co-installer is needed -->
+    <PackOne_WdfCoinstaller Condition="'$(TargetOS)'=='Win7'"></PackOne_WdfCoinstaller>
     <PackOne_WdfCoinstaller Condition="'$(TargetOS)'=='Win10'"></PackOne_WdfCoinstaller>
     <PackOne_WdfCoinstaller Condition="'$(TargetOS)'=='Win11'"></PackOne_WdfCoinstaller>
   </PropertyGroup>

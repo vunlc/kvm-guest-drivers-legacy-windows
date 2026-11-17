@@ -1,0 +1,4 @@
+# cmd.exe can fail to find labels ("The system cannot find the batch label") in
+# LF-only batch files, so check the Windows 7 batch files out with CRLF.
+vio9p/**/*.bat text eol=crlf
+viofs/buildWin7.bat text eol=crlf

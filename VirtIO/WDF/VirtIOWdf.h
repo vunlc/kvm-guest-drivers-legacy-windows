@@ -34,6 +34,21 @@
 #include <wdf.h>
 #include "virtio_pci.h"
 
+/* KMDF feature levels used by the library. Windows 7 ships KMDF 1.9 in-box;
+ * when the version macros are not defined we assume a modern framework. */
+#if defined(KMDF_VERSION_MAJOR) && defined(KMDF_VERSION_MINOR) && (KMDF_VERSION_MAJOR == 1) &&     \
+    (KMDF_VERSION_MINOR < 11)
+#define VIRTIO_WDF_KMDF_PRE_1_11 1
+#else
+#define VIRTIO_WDF_KMDF_PRE_1_11 0
+#endif
+#if defined(KMDF_VERSION_MAJOR) && defined(KMDF_VERSION_MINOR) && (KMDF_VERSION_MAJOR == 1) &&     \
+    (KMDF_VERSION_MINOR < 13)
+#define VIRTIO_WDF_KMDF_PRE_1_13 1
+#else
+#define VIRTIO_WDF_KMDF_PRE_1_13 0
+#endif
+
 /* Configures a virtqueue, see VirtIOWdfInitQueues. */
 typedef struct virtio_wdf_queue_param {
     /* interrupt associated with the queue */

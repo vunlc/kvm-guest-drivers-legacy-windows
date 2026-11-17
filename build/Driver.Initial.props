@@ -27,4 +27,9 @@ Common property definitions used by all drivers:
     <KmdfVersion>1.11</KmdfVersion>
     <_NT_TARGET_VERSION>0x0602</_NT_TARGET_VERSION>
   </PropertyGroup>
+  <!-- Windows 7 ships KMDF 1.9 in-box. Requires a WDK that can still target Windows 7 (see viofs\WIN7.md). -->
+  <PropertyGroup Condition="'$(TargetVersion)'=='Windows7'">
+    <KmdfVersion>1.9</KmdfVersion>
+    <_NT_TARGET_VERSION>0x0601</_NT_TARGET_VERSION>
+  </PropertyGroup>
 </Project>

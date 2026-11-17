@@ -61,7 +61,25 @@ Common property definitions used by all drivers:
     <InfArch>$(TargetArch).$(INF_ARCH_FOR_WIN11)</InfArch>
   </PropertyGroup>
 
+  <!-- Windows 7 / Server 2008 R2. Universal drivers require Windows 10, so Win7 builds are Desktop drivers. -->
+  <PropertyGroup Condition="'$(Configuration)'=='Win7 Release' OR '$(Configuration)'=='Win7 Debug'">
+    <_NT_TARGET_MAJ>61</_NT_TARGET_MAJ>
+    <TargetOS>Win7</TargetOS>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+    <InfArch>$(TargetArch).6.1</InfArch>
+  </PropertyGroup>
+
   <ItemGroup>
+    <Substitution Include="INX_PLATFORM_DRIVERS_DIR" Condition="'$(Configuration)'=='Win7 Release' OR '$(Configuration)'=='Win7 Debug'">
+      <ReplaceWith>12</ReplaceWith>
+    </Substitution>
+    <Substitution Include="INX_BASE_ON_SYSTEM_ROOT_DRIVER_DIR" Condition="'$(Configuration)'=='Win7 Release' OR '$(Configuration)'=='Win7 Debug'">
+      <ReplaceWith>%25%25SystemRoot%25%25\System32\drivers</ReplaceWith>
+    </Substitution>
+    <Substitution Include="INX_NETKVM_DMAREMAP" Condition="'$(Configuration)'=='Win7 Release' OR '$(Configuration)'=='Win7 Debug'">
+      <ReplaceWith>0</ReplaceWith>
+    </Substitution>
+
     <Substitution Include="INX_PLATFORM_DRIVERS_DIR" Condition="'$(Configuration)'=='Win10 Release' OR '$(Configuration)'=='Win10 Debug'">
       <ReplaceWith>12</ReplaceWith>
     </Substitution>

@@ -4,6 +4,13 @@ set CODEQL_BIN=%CODEQL_HOME%\codeql\codeql.cmd
 set CODEQL_DRIVER_SUITES=%CODEQL_HOME%\Windows-Driver-Developer-Supplemental-Tools\suites
 
 if not "%EnterpriseWDK%"=="" goto ready
+if "%1"=="Win7" (
+    rem Windows 7 targets need an older EWDK: WDKs from Windows 11 22H2 on can no longer target Win7.
+    if "%EWDK_WIN7_DIR%"=="" set EWDK_WIN7_DIR=c:\ewdk10_2004
+    call "%EWDK_WIN7_DIR%\BuildEnv\SetupBuildEnv.cmd"
+    @echo off
+    goto :eof
+)
 if "%1"=="Win11" (
     if "%EWDK11_26H1_DIR%"=="" set EWDK11_26H1_DIR=c:\ewdk11_26h1
     call "%EWDK11_26H1_DIR%\BuildEnv\SetupBuildEnv.cmd"
