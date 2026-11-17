@@ -24,9 +24,12 @@ prompt:
 
 ```bat
 cd vio9p
-buildWin7.bat amd64       &rem output: Install\win7\amd64\
-..\build\signAll.bat      &rem optional: test-sign with the repo's test certificate
+buildWin7.bat amd64       &rem output: Install\win7\amd64\ (unsigned)
+..\build\signAll.bat      &rem test-sign with the repo's test certificate
 ```
+
+Signing is required: 64-bit Windows 7 does not load an unsigned driver, even
+in test-signing mode.
 
 `viofs` builds the same way with `viofs\buildWin7.bat`. For a ready-to-run
 VirtFS setup, build `vio9p-win7-setup.exe` as described in the

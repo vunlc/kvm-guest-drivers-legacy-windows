@@ -68,10 +68,13 @@ type and duration of every 9P request.
 cd vio9p
 set EWDK_WIN7_DIR=D:         &rem location of the EWDK 2004 (default c:\ewdk10_2004)
 buildWin7.bat amd64          &rem or x86; see ..\viofs\WIN7.md for the toolchain
-..\build\signAll.bat         &rem optional: test-sign with build\VirtIOTestCert.pfx
+..\build\signAll.bat         &rem test-sign with build\VirtIOTestCert.pfx
 ```
 
-The output goes to `Install\win7\<arch>\`.
+The output goes to `Install\win7\<arch>\`. The build leaves the driver
+unsigned, and 64-bit Windows 7 does not load an unsigned driver, even in
+test-signing mode, so run `signAll.bat` before installing it or building the
+installer.
 
 ## Installer
 
