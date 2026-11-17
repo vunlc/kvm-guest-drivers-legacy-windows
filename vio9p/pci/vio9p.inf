@@ -1,0 +1,90 @@
+;/*++
+;
+;INX_COPYRIGHT_1
+;INX_COPYRIGHT_2
+;
+;Module Name:
+;    vio9p.inf
+;
+;Abstract:
+;    Transport driver for the virtio-9p device used by QEMU VirtFS
+;    (-device virtio-9p-pci). The 9P2000.L file system client is the
+;    vio9psvc.exe service, built on WinFsp.
+;
+;--*/
+
+[Version]
+Signature       = "$WINDOWS NT$"
+Class           = System
+ClassGuid       = {4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider        = %VENDOR%
+CatalogFile     = vio9p.cat
+PnpLockdown     = 1
+DriverVer       = 01/01/2008,0.0.0.1 ; this line will be replaced with stampinf
+
+[DestinationDirs]
+DefaultDestDir = INX_PLATFORM_DRIVERS_DIR
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+vio9p.sys = 1,,
+
+; ---------------
+; Install Section
+; ---------------
+
+[Manufacturer]
+%VENDOR% = Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+; transitional (legacy + modern) and modern-only virtio-9p devices
+%Vio9p.DeviceDesc% = Vio9p_Device, PCI\VEN_1AF4&DEV_1009
+%Vio9p.DeviceDesc% = Vio9p_Device, PCI\VEN_1AF4&DEV_1049
+
+[Vio9p_Device.NT]
+CopyFiles = Vio9p_CopyFiles
+
+[Vio9p_Device.NT.HW]
+AddReg = Vio9p_AddReg
+
+[Vio9p_CopyFiles]
+vio9p.sys
+
+[Vio9p_AddReg]
+; Only SYSTEM (the vio9p service) and Administrators may open the device;
+; FILE_DEVICE_SECURE_OPEN (0x100) applies that to every name under it.
+HKR,,Security,,"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
+HKR,,DeviceCharacteristics,0x10001,0x100
+HKR,Interrupt Management,,0x00000010
+HKR,Interrupt Management\MessageSignaledInterruptProperties,,0x00000010
+HKR,Interrupt Management\MessageSignaledInterruptProperties,MSISupported,0x00010001,1
+HKR,Interrupt Management\MessageSignaledInterruptProperties,MessageNumberLimit,0x00010001,1
+
+; --------------------
+; Service Installation
+; --------------------
+
+[Vio9p_Device.NT.Services]
+AddService = Vio9pDrv,0x00000002,Vio9p_Service_Install
+
+[Vio9p_Service_Install]
+DisplayName    = %Vio9p.Service%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %INX_PLATFORM_DRIVERS_DIR%\vio9p.sys
+LoadOrderGroup = Extended Base
+
+[Vio9p_Device.NT.Wdf]
+KmdfService = Vio9pDrv, Vio9p_wdfsect
+
+[Vio9p_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+VENDOR           = "INX_COMPANY"
+DiskName         = "INX_PREFIX_VIRTIOVirtIO 9P Installation Disk"
+Vio9p.DeviceDesc = "INX_PREFIX_VIRTIOVirtIO 9P (VirtFS) Device"
+Vio9p.Service    = "INX_PREFIX_VIRTIOVirtIO 9P Driver"
