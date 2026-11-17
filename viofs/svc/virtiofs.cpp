@@ -280,11 +280,7 @@ static NTSTATUS VirtFsFuseRequest(HANDLE Device,
                                   DWORD OutBufferSize,
                                   DWORD Code = IOCTL_VIRTFS_FUSE_REQUEST);
 
-static DWORD WINAPI DeviceNotificationCallback(HCMNOTIFICATION Notify,
-                                               PVOID Context,
-                                               CM_NOTIFY_ACTION Action,
-                                               PCM_NOTIFY_EVENT_DATA EventData,
-                                               DWORD EventDataSize);
+static void DeviceNotificationCallback(PVOID Context, DeviceNotifyAction Action);
 
 static int64_t GetUniqueIdentifier()
 {
@@ -423,33 +419,23 @@ VOID VIRTFS::DevQueryRemove()
     CloseDeviceInterface();
 }
 
-DWORD WINAPI DeviceNotificationCallback(HCMNOTIFICATION Notify,
-                                        PVOID Context,
-                                        CM_NOTIFY_ACTION Action,
-                                        PCM_NOTIFY_EVENT_DATA EventData,
-                                        DWORD EventDataSize)
+void DeviceNotificationCallback(PVOID Context, DeviceNotifyAction Action)
 {
     auto VirtFs = static_cast<VIRTFS *>(Context);
 
-    UNREFERENCED_PARAMETER(Notify);
-    UNREFERENCED_PARAMETER(EventData);
-    UNREFERENCED_PARAMETER(EventDataSize);
-
     switch (Action)
     {
-        case CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL:
-        case CM_NOTIFY_ACTION_DEVICEQUERYREMOVEFAILED:
+        case DeviceNotifyAction::InterfaceArrival:
+        case DeviceNotifyAction::QueryRemoveFailed:
             VirtFs->DevInterfaceArrival();
             break;
-        case CM_NOTIFY_ACTION_DEVICEQUERYREMOVE:
-        case CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE:
+        case DeviceNotifyAction::QueryRemove:
+        case DeviceNotifyAction::RemoveComplete:
             VirtFs->DevQueryRemove();
             break;
         default:
             break;
     }
-
-    return ERROR_SUCCESS;
 }
 
 static bool DirChangeTokenEqual(const VIRTFS_CHANGE_TOKEN &Left, const VIRTFS_CHANGE_TOKEN &Right)

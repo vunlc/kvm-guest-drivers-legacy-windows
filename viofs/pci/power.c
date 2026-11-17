@@ -112,15 +112,20 @@ NTSTATUS VirtFsEvtDevicePrepareHardware(IN WDFDEVICE Device,
     context->NumQueues = 2;
     context->QueueSize = VIRT_FS_MAX_QUEUE_SIZE;
 
-    context->VirtQueues = ExAllocatePoolZero(NonPagedPool,
-                                             context->NumQueues * sizeof(struct virtqueue *),
-                                             VIRT_FS_MEMORY_TAG);
+    // ExAllocatePoolZero is not usable when targeting Windows 7; allocate and zero explicitly.
+    context->VirtQueues = ExAllocatePoolUninitialized(NonPagedPool,
+                                                      context->NumQueues * sizeof(struct virtqueue *),
+                                                      VIRT_FS_MEMORY_TAG);
 
     if (context->VirtQueues == NULL)
     {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_POWER, "Failed to allocate queues");
 
         status = STATUS_INSUFFICIENT_RESOURCES;
+    }
+    else
+    {
+        RtlZeroMemory(context->VirtQueues, context->NumQueues * sizeof(struct virtqueue *));
     }
 
     if (NT_SUCCESS(status))

@@ -45,6 +45,12 @@
 
 #define VIRT_FS_DMAR                   1
 
+// The zero-copy read path (IOCTL_VIRTFS_FUSE_REQUEST_READ) maps a chain of two
+// MDLs, which needs WdfDmaTransactionInitializeUsingOffset (KMDF 1.11+). Windows 7
+// only has KMDF 1.9, so there the reply is received into a nonpaged bounce buffer
+// and copied to the caller's buffers on completion.
+#define VIRT_FS_BOUNCE_READ            VIRTIO_WDF_KMDF_PRE_1_11
+
 #define VIRT_FS_MEMORY_TAG             ((ULONG)'sf_V')
 
 #define VIRT_FS_ENABLE_INDIRECT        1
@@ -94,6 +100,17 @@ typedef struct _VIRTIO_FS_REQUEST
     BOOLEAN Cancellable;
     struct VirtIOBufferDescriptor SGTable[VIRT_FS_MAX_QUEUE_SIZE];
     PMDL Mdl;
+#if VIRT_FS_BOUNCE_READ
+    // IOCTL_VIRTFS_FUSE_REQUEST_READ on KMDF < 1.11: the device writes the reply
+    // header and data into ReadBounce; on completion the header is copied to
+    // ReadHeader (IOCTL output buffer) and the data to ReadData (the caller's
+    // locked read buffer, system address).
+    PVOID ReadBounce;
+    PVOID ReadHeader;
+    ULONG ReadHeaderLength;
+    PVOID ReadData;
+    ULONG ReadDataLength;
+#endif
 #endif
 } VIRTIO_FS_REQUEST, *PVIRTIO_FS_REQUEST;
 
@@ -167,3 +184,6 @@ BOOLEAN VirtFsDequeueRequest(PDEVICE_CONTEXT Context, PVIRTIO_FS_REQUEST Req);
 BOOLEAN VirtFsDequeueWdfRequest(PDEVICE_CONTEXT Context, WDFREQUEST WdfRequest);
 NTSTATUS AllocateVirtFSRequest(IN PDEVICE_CONTEXT Context, OUT PVIRTIO_FS_REQUEST *Request, PVOID InBuf);
 void FreeVirtFsRequest(IN PVIRTIO_FS_REQUEST Request);
+#if VIRT_FS_BOUNCE_READ
+void VirtFsCompleteBounceRead(IN PVIRTIO_FS_REQUEST Request, IN ULONG Length);
+#endif

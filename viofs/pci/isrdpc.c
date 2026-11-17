@@ -211,6 +211,10 @@ static VOID VirtFsReadFromQueue(PDEVICE_CONTEXT context, struct virtqueue *vq, W
 
         WdfSpinLockRelease(vq_lock);
 
+        // Each completed request starts out successful; a cancellation of an
+        // earlier request in this loop must not leak into the next one.
+        status = STATUS_SUCCESS;
+
         TraceEvents(TRACE_LEVEL_VERBOSE, DBG_DPC, "Got %p Request: %p, len %d", fs_req, fs_req->Request, length);
 
         VirtFsDequeueRequest(context, fs_req);
@@ -278,6 +282,12 @@ static VOID VirtFsReadFromQueue(PDEVICE_CONTEXT context, struct virtqueue *vq, W
 #else
             VirtIOWdfDeviceDmaTxComplete(&context->VDevice.VIODevice, fs_req->H2D_Params.transaction);
             VirtIOWdfDeviceDmaRxComplete(&context->VDevice.VIODevice, fs_req->D2H_Params.transaction, length);
+#if VIRT_FS_BOUNCE_READ
+            if (NT_SUCCESS(status))
+            {
+                VirtFsCompleteBounceRead(fs_req, length);
+            }
+#endif
 #endif
 
             TraceEvents(TRACE_LEVEL_VERBOSE,

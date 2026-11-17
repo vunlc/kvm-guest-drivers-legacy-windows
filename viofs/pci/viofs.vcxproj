@@ -5,8 +5,16 @@
       <Configuration>Win10 Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Win7 Release|Win32">
+      <Configuration>Win7 Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Win10 Release|x64">
       <Configuration>Win10 Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win7 Release|x64">
+      <Configuration>Win7 Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Win10 Release|ARM64">
@@ -46,6 +54,12 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <KMDF_VERSION_MINOR>15</KMDF_VERSION_MINOR>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <KMDF_VERSION_MINOR>9</KMDF_VERSION_MINOR>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win11 Release|Win32'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -57,6 +71,12 @@
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
     <KMDF_VERSION_MINOR>15</KMDF_VERSION_MINOR>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <KMDF_VERSION_MINOR>9</KMDF_VERSION_MINOR>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win11 Release|x64'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
@@ -123,8 +143,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'">..\..\VirtIO\objfre_win10_x86\i386;..\..\VirtIO\WDF\objfre_win10_x86\i386;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">..\..\VirtIO\objfre_win7_x86\i386;..\..\VirtIO\WDF\objfre_win7_x86\i386;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win11 Release|Win32'">..\..\VirtIO\objfre_win11_x86\i386;..\..\VirtIO\WDF\objfre_win11_x86\i386;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'">..\..\VirtIO\objfre_win10_amd64\amd64;..\..\VirtIO\WDF\objfre_win10_amd64\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">..\..\VirtIO\objfre_win7_amd64\amd64;..\..\VirtIO\WDF\objfre_win7_amd64\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win11 Release|x64'">..\..\VirtIO\objfre_win11_amd64\amd64;..\..\VirtIO\WDF\objfre_win11_amd64\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win10 Release|ARM64'">..\..\VirtIO\objfre_win10_arm64\arm64;..\..\VirtIO\WDF\objfre_win10_arm64\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Win11 Release|ARM64'">..\..\VirtIO\objfre_win11_arm64\arm64;..\..\VirtIO\WDF\objfre_win11_arm64\arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

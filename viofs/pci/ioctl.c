@@ -481,6 +481,34 @@ static VOID HandleFuseRead(IN PDEVICE_CONTEXT Context,
     fs_req->Request = Request;
     fs_req->Cancellable = FALSE;
 
+#if VIRT_FS_BOUNCE_READ
+    // KMDF < 1.11 cannot map the two-MDL chain used below. Let the device write the
+    // reply header and data into one nonpaged buffer described by a single MDL;
+    // VirtFsCompleteBounceRead copies them out when the request completes.
+    // originalBufferLen is bounded by VirtFsEvtIoInCallerContext (VIRT_FS_MAX_QUEUE_SIZE pages).
+    ULONG bounceLength = outHeaderLength + originalBufferLen;
+    fs_req->ReadBounce = ExAllocatePoolUninitialized(NonPagedPool, bounceLength, VIRT_FS_MEMORY_TAG);
+    if (!fs_req->ReadBounce)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "Can't allocate read bounce buffer (%u bytes)", bounceLength);
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto complete_wdf_req;
+    }
+    fs_req->ReadHeader = out_buf;
+    fs_req->ReadHeaderLength = outHeaderLength;
+    fs_req->ReadData = WdfMemoryGetBuffer(userMem, NULL);
+    fs_req->ReadDataLength = originalBufferLen;
+
+    PMDL bounceMdl = IoAllocateMdl(fs_req->ReadBounce, bounceLength, FALSE, FALSE, NULL);
+    if (!bounceMdl)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "Can't create bounce MDL");
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto complete_wdf_req;
+    }
+    MmBuildMdlForNonPagedPool(bounceMdl);
+    fs_req->Mdl = bounceMdl;
+#else
     PMDL firstMdl = IoAllocateMdl(out_buf, outHeaderLength, FALSE, FALSE, NULL);
     if (!firstMdl)
     {
@@ -500,6 +528,7 @@ static VOID HandleFuseRead(IN PDEVICE_CONTEXT Context,
     MmBuildMdlForNonPagedPool(secondMdl);
     firstMdl->Next = secondMdl;
     fs_req->Mdl = firstMdl;
+#endif
 
     RtlZeroMemory(&fs_req->H2D_Params, sizeof(fs_req->H2D_Params));
     RtlZeroMemory(&fs_req->D2H_Params, sizeof(fs_req->D2H_Params));
@@ -511,7 +540,7 @@ static VOID HandleFuseRead(IN PDEVICE_CONTEXT Context,
     fs_req->H2D_Params.param2 = fs_req;
 
     fs_req->D2H_Params.allocationTag = VIRT_FS_MEMORY_TAG;
-    fs_req->D2H_Params.buffer = firstMdl;
+    fs_req->D2H_Params.buffer = fs_req->Mdl;
     fs_req->D2H_Params.req = (WDFREQUEST)WDF_INVALID_HANDLE;
     fs_req->D2H_Params.size = outHeaderLength + originalBufferLen;
     fs_req->D2H_Params.param1 = Context;
@@ -534,6 +563,31 @@ complete_wdf_req_no_fs_req:
     TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "Complete Request: %p Status: %!STATUS!", Request, status);
     WdfRequestComplete(Request, status);
 }
+
+#if VIRT_FS_BOUNCE_READ
+// Called from the completion DPC after the D2H DMA transaction of a bounced
+// IOCTL_VIRTFS_FUSE_REQUEST_READ has completed. Length is the number of bytes the
+// device wrote (reply header followed by data); it is clamped to the buffers.
+void VirtFsCompleteBounceRead(IN PVIRTIO_FS_REQUEST Request, IN ULONG Length)
+{
+    PUCHAR src = Request->ReadBounce;
+    ULONG hdrLen, dataLen;
+
+    if (src == NULL)
+    {
+        return;
+    }
+
+    hdrLen = min(Length, Request->ReadHeaderLength);
+    RtlCopyMemory(Request->ReadHeader, src, hdrLen);
+
+    dataLen = min(Length - hdrLen, Request->ReadDataLength);
+    if (dataLen != 0 && Request->ReadData != NULL)
+    {
+        RtlCopyMemory(Request->ReadData, src + Request->ReadHeaderLength, dataLen);
+    }
+}
+#endif
 
 // Runs at PASSIVE_LEVEL in the requestor's thread and process context, before the
 // request is placed in a queue. IOCTL_VIRTFS_FUSE_REQUEST_READ carries a raw

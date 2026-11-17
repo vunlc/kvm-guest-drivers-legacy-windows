@@ -42,7 +42,9 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
     WDF_DRIVER_CONFIG config;
     WDF_OBJECT_ATTRIBUTES attributes;
 
+#if (NTDDI_VERSION > NTDDI_WIN7)
     ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+#endif
 
     // Initialize the WPP tracing.
     WPP_INIT_TRACING(DriverObject, RegistryPath);
@@ -242,6 +244,9 @@ NTSTATUS AllocateVirtFSRequest(IN PDEVICE_CONTEXT Context, OUT PVIRTIO_FS_REQUES
     (*Request)->Handle = handle;
 #if VIRT_FS_DMAR
     (*Request)->Mdl = NULL;
+#if VIRT_FS_BOUNCE_READ
+    (*Request)->ReadBounce = NULL;
+#endif
 #endif
     opcode = ((struct fuse_in_header *)InBuf)->opcode;
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "new FS request for opcode %d", opcode);
@@ -274,6 +279,13 @@ void FreeVirtFsRequest(IN PVIRTIO_FS_REQUEST Request)
         mdlChain = mdl->Next;
         IoFreeMdl(mdl);
     }
+#if VIRT_FS_BOUNCE_READ
+    if (Request->ReadBounce != NULL)
+    {
+        ExFreePoolWithTag(Request->ReadBounce, VIRT_FS_MEMORY_TAG);
+        Request->ReadBounce = NULL;
+    }
+#endif
 #endif
     if (Request->Handle != NULL)
     {
