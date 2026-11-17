@@ -1,5 +1,47 @@
 # KVM/QEMU Windows guest drivers (virtio-win) #
 
+## About this fork: Windows 7 support ##
+
+This is a fork of [virtio-win/kvm-guest-drivers-windows][upstream] that
+brings file sharing back to **Windows 7 SP1 / Server 2008 R2** guests.
+Upstream dropped the Windows 7 targets in 2022 (commit `05ca163d`). Every
+other driver here is unchanged from upstream and still targets Windows 10
+and 11 only.
+
+| Component | What it adds | Status | Docs |
+| --- | --- | --- | --- |
+| Build system and `VirtIO` libraries | `Win7` build configurations (KMDF 1.9, `_NT_TARGET_VERSION` 0x0601). `Dma.c` falls back when KMDF 1.11/1.13 APIs are missing. | Used by both drivers below | [viofs/WIN7.md](viofs/WIN7.md) |
+| `viofs` (virtio-fs) | Port of the upstream driver and `virtiofs.exe` service. Uses a bounce-buffer read path for KMDF 1.9 and `RegisterDeviceNotification` instead of `CM_Register_Notification`. | x64 builds cleanly; **not yet runtime-tested** | [viofs/WIN7.md](viofs/WIN7.md) |
+| `vio9p` (virtio-9p / VirtFS) | **New** driver, WinFsp-based 9P2000.L service and installer for QEMU `-virtfs` / UTM "VirtFS" shares. Mounts the share as a drive letter (`Z:` by default). | Tested on Windows 7 SP1 x64 under UTM | [vio9p/README.md](vio9p/README.md) |
+
+### Quick start ###
+
+Windows 7 builds need the **EWDK for Windows 10, version 2004
+(10.0.19041)**, because WDKs from Windows 11 22H2 on can no longer target
+Windows 7. Mount it at `c:\ewdk10_2004` or set `EWDK_WIN7_DIR`. The
+WinFsp development files must also be installed. Build from a fresh command
+prompt:
+
+```bat
+cd vio9p
+buildWin7.bat amd64       &rem output: Install\win7\amd64\
+..\build\signAll.bat      &rem optional: test-sign with the repo's test certificate
+```
+
+`viofs` builds the same way with `viofs\buildWin7.bat`. For a ready-to-run
+VirtFS setup, build `vio9p-win7-setup.exe` as described in the
+[vio9p installer section](vio9p/README.md#installer).
+
+On 64-bit Windows 7, install KB4474419 and KB4490628 (SHA-2 code signing)
+first. Test-signed drivers also need `bcdedit /set testsigning on`.
+
+To pick up upstream fixes, rebase onto upstream `master`. Upstream does not
+review or support the Windows 7 changes.
+
+The rest of this file is the upstream README.
+
+- - - -
+
 This repository contains KVM/QEMU Windows guest drivers, for both
 paravirtual and emulated hardware. The code builds and ships as part
 of the virtio-win RPM on Fedora and Red Hat Enterprise Linux, and the
@@ -34,6 +76,7 @@ versions of KVM/QEMU. This is especially important if you plan to
 distribute the drivers with Windows Update, see the 
 [Microsoft publishing restrictions][ms-publishing] for more details.
 
+[upstream]:https://github.com/virtio-win/kvm-guest-drivers-windows
 [fedora-virtio]:https://docs.fedoraproject.org/en-US/quick-docs/creating-windows-virtual-machines-using-virtio-drivers/index.html
 [wiki-building]:https://virtio-win.github.io/Development/Building-the-drivers-using-Windows-11-24H2-EWDK
 [ms-signing]:https://docs.microsoft.com/en-us/windows-hardware/drivers/install/installing-test-signed-driver-packages
