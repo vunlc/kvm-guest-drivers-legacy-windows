@@ -38,3 +38,41 @@ codeql_db
 *.sarif
 *CodeAnalysis.log
 vc.nativecodeanalysis.all.xml
+
+# --- macOS system files ---
+.DS_Store
+.AppleDouble
+.LSOverride
+# Custom folder icon file ("Icon" + CR; the 2nd CR survives git stripping one)
+Icon
+# Resource forks / AppleDouble files
+._*
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+# Directories potentially created on remote AFP shares
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# --- Windows system files ---
+# Thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+# Folder config files
+[Dd]esktop.ini
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+# Windows shortcuts
+*.lnk
+# Cygwin/MSYS crash dumps
+*.stackdump
